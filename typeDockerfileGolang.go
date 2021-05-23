@@ -9,19 +9,19 @@ import (
 	"strings"
 )
 
-// changePort (english):
+// ChangePort (english):
 //
-// changePort (português): Recebe a relação entre portas a serem trocadas
+// ChangePort (português): Recebe a relação entre portas a serem trocadas
 //   oldPort: porta original da imagem
 //   newPort: porta a exporta na rede
-type changePort struct {
+type ChangePort struct {
 	oldPort string
 	newPort string
 }
 
 type DockerfileGolang struct{}
 
-func (e *DockerfileGolang) MountDefaultDockerfile(args map[string]*string, changePorts []changePort, openPorts []string, volumes []mount.Mount) (dockerfile string, err error) {
+func (e *DockerfileGolang) MountDefaultDockerfile(args map[string]*string, changePorts []ChangePort, openPorts []string, volumes []mount.Mount) (dockerfile string, err error) {
 
 	var info fs.FileInfo
 	var found bool
