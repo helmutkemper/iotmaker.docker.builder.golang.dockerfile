@@ -15,8 +15,8 @@ import (
 //   oldPort: porta original da imagem
 //   newPort: porta a exporta na rede
 type ChangePort struct {
-	oldPort string
-	newPort string
+	OldPort string
+	NewPort string
 }
 
 type DockerfileGolang struct{}
@@ -173,7 +173,7 @@ COPY --from=builder /app/main .
 	for _, v := range changePorts {
 		var pass = true
 		for _, expose := range exposeList {
-			if expose == v.oldPort {
+			if expose == v.OldPort {
 				pass = false
 				break
 			}
@@ -182,9 +182,9 @@ COPY --from=builder /app/main .
 		if pass == false {
 			continue
 		}
-		exposeList = append(exposeList, v.oldPort)
+		exposeList = append(exposeList, v.OldPort)
 
-		dockerfile += `EXPOSE ` + v.oldPort + `
+		dockerfile += `EXPOSE ` + v.OldPort + `
 `
 	}
 
