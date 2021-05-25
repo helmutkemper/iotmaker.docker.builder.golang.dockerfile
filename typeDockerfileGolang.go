@@ -142,7 +142,7 @@ RUN git config --global url.ssh://git@github.com/.insteadOf https://github.com/
 		dockerfile += `
 # (en) defines the path of the private repository
 # (pt) define o caminho do repositório privado
-RUN echo "go env -w GOPRIVATE=$GIT_PRIVATE_REPO"
+RUN go env -w GOPRIVATE=$GIT_PRIVATE_REPO
 `
 	}
 
