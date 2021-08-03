@@ -10,7 +10,9 @@ import (
 	"strings"
 )
 
-// ChangePort (english):
+// ChangePort (english): Receives the relationship between ports to be exchanged
+//   oldPort: porta original da imagem
+//   newPort: porta a exporta na rede
 //
 // ChangePort (português): Recebe a relação entre portas a serem trocadas
 //   oldPort: porta original da imagem
@@ -22,11 +24,9 @@ type ChangePort struct {
 
 type DockerfileGolang struct{}
 
-// Prayer
+// Prayer (english): Programmer prayer
 //
-// English: Programmer prayer
-//
-// Português: Oração do programador
+// Prayer (português): Oração do programador
 func (e *DockerfileGolang) Prayer() {
 	log.Print("Português:")
 	log.Print("Código nosso que estais em Golang\nSantificado seja Vós, Console\nVenha a nós a Vossa Reflexão\nE seja feita a {Vossa chave}\nAssim no if(){}\nComo no else{}\nO for (nosso; de cada dia; nos dai hoje++)\nDebugai as nossas sentenças\nAssim como nós colocamos\nO ponto e vírgula esquecido;\nE não nos\n\tdeixe errar\n\t\tindentação\nMas, livreiros das funções recursivas\nA main ()")
@@ -36,7 +36,28 @@ func (e *DockerfileGolang) Prayer() {
 	log.Print("")
 }
 
-func (e *DockerfileGolang) MountDefaultDockerfile(args map[string]*string, changePorts []ChangePort, openPorts []string, volumes []mount.Mount) (dockerfile string, err error) {
+// MountDefaultDockerfile (english): Build a default dockerfile for image
+//   Input:
+//     args: list of environment variables used in the container
+//     changePorts: list of ports to be exposed on the network, used in the original image that should be changed. E.g.: 27017 to 27016
+//     openPorts: list of ports to be exposed on the network
+//     exposePorts: list of ports to just be added to the project's dockerfile
+//     volumes: list of folders and files with permission to share between the container and the host.
+//   Output:
+//     dockerfile: string containing the project's dockerfile
+//     err: standard error object
+//
+// MountDefaultDockerfile (português): Monta o dockerfile padrão para a imagem
+//   Entrada:
+//     args: lista de variáveis de ambiente usadas no container
+//     changePorts: lista de portas a serem expostas na rede, usadas na imagem original que devem ser trocadas. Ex.: 27017 para 27016
+//     openPorts: lista de portas a serem expostas na rede
+//     exposePorts: lista de portas a serem apenas adicionadas ao dockerfile do projeto
+//     volumes: lista de pastas e arquivos com permissão de compartilhamento entre o container e o hospedeiro.
+//   Saída:
+//     dockerfile: string contendo o dockerfile do projeto
+//     err: objeto de erro padrão
+func (e *DockerfileGolang) MountDefaultDockerfile(args map[string]*string, changePorts []ChangePort, openPorts []string, exposePorts []string, volumes []mount.Mount) (dockerfile string, err error) {
 
 	var info fs.FileInfo
 	var found bool
@@ -204,6 +225,24 @@ COPY --from=builder /app/main .
 	}
 
 	for _, v := range openPorts {
+		var pass = true
+		for _, expose := range exposeList {
+			if expose == v {
+				pass = false
+				break
+			}
+		}
+
+		if pass == false {
+			continue
+		}
+		exposeList = append(exposeList, v)
+
+		dockerfile += `EXPOSE ` + v + `
+`
+	}
+
+	for _, v := range exposePorts {
 		var pass = true
 		for _, expose := range exposeList {
 			if expose == v {
