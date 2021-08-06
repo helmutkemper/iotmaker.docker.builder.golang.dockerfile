@@ -123,9 +123,12 @@ ARG ` + k + `
 
 	dockerfile += `
 #
-# (en) creates the .ssh directory within the root directory
-# (pt) cria o diretório .ssh dentro do diretório root
-RUN mkdir -p /root/.ssh/ && \
+# (en) Add open ssl to alpine
+# (pr) Adiciona o open ssl ao apine
+RUN apk add openssh && \
+    # (en) creates the .ssh directory within the root directory
+    # (pt) cria o diretório .ssh dentro do diretório root
+    mkdir -p /root/.ssh/ && \
 `
 	_, found = args["SSH_ID_RSA_FILE"]
 	if found == true {
