@@ -57,17 +57,37 @@ func (e *DockerfileGolang) Prayer() {
 //   Saída:
 //     dockerfile: string contendo o dockerfile do projeto
 //     err: objeto de erro padrão
-func (e *DockerfileGolang) MountDefaultDockerfile(args map[string]*string, changePorts []ChangePort, openPorts []string, exposePorts []string, volumes []mount.Mount) (dockerfile string, err error) {
+func (e *DockerfileGolang) MountDefaultDockerfile(
+	args map[string]*string,
+	changePorts []ChangePort,
+	openPorts []string,
+	exposePorts []string,
+	volumes []mount.Mount,
+	useCache bool,
+) (
+	dockerfile string,
+	err error,
+) {
 
 	var info fs.FileInfo
 	var found bool
 
-	dockerfile += `
+	if useCache == true {
+		dockerfile += `
+# (en) first stage of the process
+# (pt) primeira etapa do processo
+FROM cache:latest as builder
+#
+`
+	} else {
+		dockerfile += `
 # (en) first stage of the process
 # (pt) primeira etapa do processo
 FROM golang:1.16-alpine as builder
 #
 `
+	}
+
 	for k := range args {
 		switch k {
 		case "SSH_ID_RSA_FILE":
