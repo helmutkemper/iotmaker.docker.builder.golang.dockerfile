@@ -137,7 +137,7 @@ RUN apk add openssh && \
 		dockerfile += `
 # (en) creates the .ssh directory within the root directory
 # (pt) cria o diretório .ssh dentro do diretório root
-mkdir -p /root/.ssh/
+RUN mkdir -p /root/.ssh/
 `
 	}
 
