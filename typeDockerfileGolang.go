@@ -63,7 +63,9 @@ func (e *DockerfileGolang) MountDefaultDockerfile(
 	openPorts []string,
 	exposePorts []string,
 	volumes []mount.Mount,
+	installExtraPackages bool,
 	useCache bool,
+	imageCacheName string,
 ) (
 	dockerfile string,
 	err error,
@@ -76,7 +78,7 @@ func (e *DockerfileGolang) MountDefaultDockerfile(
 		dockerfile += `
 # (en) first stage of the process
 # (pt) primeira etapa do processo
-FROM cache:latest as builder
+FROM ` + imageCacheName + ` as builder
 #
 `
 	} else {
@@ -121,11 +123,16 @@ ARG ` + k + `
 		}
 	}
 
-	dockerfile += `
+	if installExtraPackages == true {
+		dockerfile += `
 #
 # (en) Add open ssl to alpine
 # (pr) Adiciona o open ssl ao apine
 RUN apk add openssh && \
+`
+	}
+
+	dockerfile += `
     # (en) creates the .ssh directory within the root directory
     # (pt) cria o diretório .ssh dentro do diretório root
     mkdir -p /root/.ssh/ && \
@@ -166,7 +173,8 @@ RUN apk add openssh && \
 `
 	}
 
-	dockerfile += `
+	if installExtraPackages == true {
+		dockerfile += `
     # (en) prepares the OS for installation
     # (pt) prepara o OS para instalação
     apk update && \
@@ -178,6 +186,10 @@ RUN apk add openssh && \
     # (pt) instala git, fakeroot, scanelf, openssl, apk-tools, libc-utils, attr, tar, pkgconf, patch, lzip, curl, 
     #      /bin/sh, so:libc.musl-x86_64.so.1, so:libcrypto.so.1.1 e so:libz.so.1
     apk add --no-cache alpine-sdk && \
+`
+	}
+
+	dockerfile += `
     # (en) clear the cache
     # (pt) limpa a cache
     rm -rf /var/cache/apk/*
