@@ -129,14 +129,18 @@ ARG ` + k + `
 # (en) Add open ssl to alpine
 # (pr) Adiciona o open ssl ao apine
 RUN apk add openssh && \
-`
-	}
-
-	dockerfile += `
     # (en) creates the .ssh directory within the root directory
     # (pt) cria o diretório .ssh dentro do diretório root
     mkdir -p /root/.ssh/ && \
 `
+	} else {
+		dockerfile += `
+# (en) creates the .ssh directory within the root directory
+# (pt) cria o diretório .ssh dentro do diretório root
+mkdir -p /root/.ssh/
+`
+	}
+
 	_, found = args["SSH_ID_RSA_FILE"]
 	if found == true {
 		dockerfile += `
