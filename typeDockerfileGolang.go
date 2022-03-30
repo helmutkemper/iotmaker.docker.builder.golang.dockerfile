@@ -24,11 +24,23 @@ type ChangePort struct {
 
 type DockerfileGolang struct {
 	disableScratch bool
+	finalImageName string
 }
 
-// DisableScratch (english) Change final docker image from scratch to golang:1.16-alpine
+// SetFinalImageName (english) Set a two stage build final image name
 //
-// DisableScratch (português) Troca a imagem final do docker de scratch para golang:1.16-alpine
+// SetFinalImageName (português) Define o nome da imagem final para construção de imagem em dois
+// estágios.
+func (e *DockerfileGolang) SetFinalImageName(name string) {
+	e.DisableScratch()
+	e.finalImageName = name
+}
+
+// DisableScratch (english) Change final docker image from scratch to image name set in
+// SetFinalImageName() function
+//
+// DisableScratch (português) Troca a imagem final do docker de scratch para o nome da imagem definida
+// na função SetFinalImageName()
 func (e *DockerfileGolang) DisableScratch() {
 	e.disableScratch = true
 }
@@ -82,6 +94,10 @@ func (e *DockerfileGolang) MountDefaultDockerfile(
 
 	var info fs.FileInfo
 	var found bool
+
+	if e.finalImageName == "" {
+		e.finalImageName = "golang:1.16-alpine"
+	}
 
 	if useCache == true {
 		dockerfile += `
@@ -248,7 +264,7 @@ RUN go build -ldflags="-w -s" -o /app/main /app/main.go
 `
 	if e.disableScratch == true {
 		dockerfile += `
-FROM golang:1.16-alpine
+FROM ` + e.finalImageName + `
 # (en) copy your project to the new image
 # (pt) copia o seu projeto para a nova imagem
 COPY --from=builder /app/main .
