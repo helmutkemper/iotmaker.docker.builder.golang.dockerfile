@@ -10,7 +10,9 @@ import (
 	"strings"
 )
 
-// ChangePort (english):
+// ChangePort (english): Receives the relationship between ports to be exchanged
+//   oldPort: porta original da imagem
+//   newPort: porta a exporta na rede
 //
 // ChangePort (português): Recebe a relação entre portas a serem trocadas
 //   oldPort: porta original da imagem
@@ -24,11 +26,9 @@ type DockerfileGolang struct {
 	disableScratch bool
 }
 
-// Prayer
+// Prayer (english): Programmer prayer
 //
-// English: Programmer prayer
-//
-// Português: Oração do programador
+// Prayer (português): Oração do programador
 func (e *DockerfileGolang) Prayer() {
 	log.Print("Português:")
 	log.Print("Código nosso que estais em Golang\nSantificado seja Vós, Console\nVenha a nós a Vossa Reflexão\nE seja feita a {Vossa chave}\nAssim no if(){}\nComo no else{}\nO for (nosso; de cada dia; nos dai hoje++)\nDebugai as nossas sentenças\nAssim como nós colocamos\nO ponto e vírgula esquecido;\nE não nos\n\tdeixeis errar\n\t\ta indentação\nMas, livrai-nos das funções recursivas\nA main ()")
@@ -38,21 +38,60 @@ func (e *DockerfileGolang) Prayer() {
 	log.Print("")
 }
 
-func (e *DockerfileGolang) DisableScratch() {
-	e.disableScratch = true
-}
-
-func (e *DockerfileGolang) MountDefaultDockerfile(args map[string]*string, changePorts []ChangePort, openPorts []string, volumes []mount.Mount) (dockerfile string, err error) {
+// MountDefaultDockerfile (english): Build a default dockerfile for image
+//   Input:
+//     args: list of environment variables used in the container
+//     changePorts: list of ports to be exposed on the network, used in the original image that should be changed. E.g.: 27017 to 27016
+//     openPorts: list of ports to be exposed on the network
+//     exposePorts: list of ports to just be added to the project's dockerfile
+//     volumes: list of folders and files with permission to share between the container and the host.
+//   Output:
+//     dockerfile: string containing the project's dockerfile
+//     err: standard error object
+//
+// MountDefaultDockerfile (português): Monta o dockerfile padrão para a imagem
+//   Entrada:
+//     args: lista de variáveis de ambiente usadas no container
+//     changePorts: lista de portas a serem expostas na rede, usadas na imagem original que devem ser trocadas. Ex.: 27017 para 27016
+//     openPorts: lista de portas a serem expostas na rede
+//     exposePorts: lista de portas a serem apenas adicionadas ao dockerfile do projeto
+//     volumes: lista de pastas e arquivos com permissão de compartilhamento entre o container e o hospedeiro.
+//   Saída:
+//     dockerfile: string contendo o dockerfile do projeto
+//     err: objeto de erro padrão
+func (e *DockerfileGolang) MountDefaultDockerfile(
+	args map[string]*string,
+	changePorts []ChangePort,
+	openPorts []string,
+	exposePorts []string,
+	volumes []mount.Mount,
+	installExtraPackages bool,
+	useCache bool,
+	imageCacheName string,
+) (
+	dockerfile string,
+	err error,
+) {
 
 	var info fs.FileInfo
 	var found bool
 
-	dockerfile += `
+	if useCache == true {
+		dockerfile += `
+# (en) first stage of the process
+# (pt) primeira etapa do processo
+FROM ` + imageCacheName + ` as builder
+#
+`
+	} else {
+		dockerfile += `
 # (en) first stage of the process
 # (pt) primeira etapa do processo
 FROM golang:1.16-alpine as builder
 #
 `
+	}
+
 	for k := range args {
 		switch k {
 		case "SSH_ID_RSA_FILE":
@@ -86,12 +125,24 @@ ARG ` + k + `
 		}
 	}
 
-	dockerfile += `
+	if installExtraPackages == true {
+		dockerfile += `
 #
+# (en) Add open ssl to alpine
+# (pr) Adiciona o open ssl ao apine
+RUN apk add openssh && \
+    # (en) creates the .ssh directory within the root directory
+    # (pt) cria o diretório .ssh dentro do diretório root
+    mkdir -p /root/.ssh/ && \
+`
+	} else {
+		dockerfile += `
 # (en) creates the .ssh directory within the root directory
 # (pt) cria o diretório .ssh dentro do diretório root
 RUN mkdir -p /root/.ssh/ && \
 `
+	}
+
 	_, found = args["SSH_ID_RSA_FILE"]
 	if found == true {
 		dockerfile += `
@@ -128,7 +179,8 @@ RUN mkdir -p /root/.ssh/ && \
 `
 	}
 
-	dockerfile += `
+	if installExtraPackages == true {
+		dockerfile += `
     # (en) prepares the OS for installation
     # (pt) prepara o OS para instalação
     apk update && \
@@ -140,6 +192,10 @@ RUN mkdir -p /root/.ssh/ && \
     # (pt) instala git, fakeroot, scanelf, openssl, apk-tools, libc-utils, attr, tar, pkgconf, patch, lzip, curl, 
     #      /bin/sh, so:libc.musl-x86_64.so.1, so:libcrypto.so.1.1 e so:libz.so.1
     apk add --no-cache alpine-sdk && \
+`
+	}
+
+	dockerfile += `
     # (en) clear the cache
     # (pt) limpa a cache
     rm -rf /var/cache/apk/*
@@ -178,9 +234,9 @@ RUN go build -ldflags="-w -s" -o /app/main /app/main.go
 # (pt) cria uma nova imagem baseada no scratch
 # (en) scratch is an extremely simple OS capable of generating very small images
 # (pt) o scratch é um OS extremamente simples capaz de gerar imagens muito reduzidas
-# (en) discarding the previous image erases git access credentials for your security and reduces the size of the
+# (en) discarding the previous image erases git access credentials for your security and reduces the size of the 
 #      image to save server space
-# (pt) descartar a imagem anterior apaga as credenciais de acesso ao git para a sua segurança e reduz o tamanho
+# (pt) descartar a imagem anterior apaga as credenciais de acesso ao git para a sua segurança e reduz o tamanho 
 #      da imagem para poupar espaço no servidor
 `
 	if e.disableScratch == true {
@@ -222,6 +278,24 @@ COPY --from=builder /app/main .
 	}
 
 	for _, v := range openPorts {
+		var pass = true
+		for _, expose := range exposeList {
+			if expose == v {
+				pass = false
+				break
+			}
+		}
+
+		if pass == false {
+			continue
+		}
+		exposeList = append(exposeList, v)
+
+		dockerfile += `EXPOSE ` + v + `
+`
+	}
+
+	for _, v := range exposePorts {
 		var pass = true
 		for _, expose := range exposeList {
 			if expose == v {
