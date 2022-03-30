@@ -26,6 +26,13 @@ type DockerfileGolang struct {
 	disableScratch bool
 }
 
+// DisableScratch (english) Change final docker image from scratch to golang:1.16-alpine
+//
+// DisableScratch (português) Troca a imagem final do docker de scratch para golang:1.16-alpine
+func (e *DockerfileGolang) DisableScratch() {
+	e.disableScratch = true
+}
+
 // Prayer (english): Programmer prayer
 //
 // Prayer (português): Oração do programador
