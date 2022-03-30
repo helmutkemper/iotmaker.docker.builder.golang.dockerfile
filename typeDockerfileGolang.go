@@ -20,7 +20,9 @@ type ChangePort struct {
 	NewPort string
 }
 
-type DockerfileGolang struct{}
+type DockerfileGolang struct {
+	disableScratch bool
+}
 
 // Prayer
 //
@@ -29,11 +31,15 @@ type DockerfileGolang struct{}
 // Português: Oração do programador
 func (e *DockerfileGolang) Prayer() {
 	log.Print("Português:")
-	log.Print("Código nosso que estais em Golang\nSantificado seja Vós, Console\nVenha a nós a Vossa Reflexão\nE seja feita a {Vossa chave}\nAssim no if(){}\nComo no else{}\nO for (nosso; de cada dia; nos dai hoje++)\nDebugai as nossas sentenças\nAssim como nós colocamos\nO ponto e vírgula esquecido;\nE não nos\n\tdeixe errar\n\t\tindentação\nMas, livreiros das funções recursivas\nA main ()")
+	log.Print("Código nosso que estais em Golang\nSantificado seja Vós, Console\nVenha a nós a Vossa Reflexão\nE seja feita a {Vossa chave}\nAssim no if(){}\nComo no else{}\nO for (nosso; de cada dia; nos dai hoje++)\nDebugai as nossas sentenças\nAssim como nós colocamos\nO ponto e vírgula esquecido;\nE não nos\n\tdeixeis errar\n\t\ta indentação\nMas, livrai-nos das funções recursivas\nA main ()")
 	log.Print("")
 	log.Print("English:")
 	log.Print("Our program, who art in memory,\ncalled by thy name;\nthy operating system run;\nthy function be done at runtime\nas it was on development.\nGive us this day our daily output.\nAnd forgive us our code duplication,\nas we forgive those who\nduplicate code against us.\nAnd lead us not into frustration;\nbut deliver us from GOTOs.\nFor thine is algorithm,\nthe computation, and the solution,\nlooping forever and ever.\nReturn;")
 	log.Print("")
+}
+
+func (e *DockerfileGolang) DisableScratch() {
+	e.disableScratch = true
 }
 
 func (e *DockerfileGolang) MountDefaultDockerfile(args map[string]*string, changePorts []ChangePort, openPorts []string, volumes []mount.Mount) (dockerfile string, err error) {
@@ -172,10 +178,22 @@ RUN go build -ldflags="-w -s" -o /app/main /app/main.go
 # (pt) cria uma nova imagem baseada no scratch
 # (en) scratch is an extremely simple OS capable of generating very small images
 # (pt) o scratch é um OS extremamente simples capaz de gerar imagens muito reduzidas
-# (en) discarding the previous image erases git access credentials for your security and reduces the size of the 
+# (en) discarding the previous image erases git access credentials for your security and reduces the size of the
 #      image to save server space
-# (pt) descartar a imagem anterior apaga as credenciais de acesso ao git para a sua segurança e reduz o tamanho 
+# (pt) descartar a imagem anterior apaga as credenciais de acesso ao git para a sua segurança e reduz o tamanho
 #      da imagem para poupar espaço no servidor
+`
+	if e.disableScratch == true {
+		dockerfile += `
+FROM golang:1.16-alpine
+# (en) copy your project to the new image
+# (pt) copia o seu projeto para a nova imagem
+COPY --from=builder /app/main .
+# (en) execute your project
+# (pt) executa o seu projeto
+`
+	} else {
+		dockerfile += `
 FROM scratch
 # (en) copy your project to the new image
 # (pt) copia o seu projeto para a nova imagem
@@ -183,7 +201,7 @@ COPY --from=builder /app/main .
 # (en) execute your project
 # (pt) executa o seu projeto
 `
-
+	}
 	var exposeList = make([]string, 0)
 	for _, v := range changePorts {
 		var pass = true
