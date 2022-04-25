@@ -96,7 +96,7 @@ func (e *DockerfileGolang) MountDefaultDockerfile(
 	var found bool
 
 	if e.finalImageName == "" {
-		e.finalImageName = "golang:1.16-alpine"
+		e.finalImageName = "golang:1.17-alpine"
 	}
 
 	if useCache == true {
@@ -110,7 +110,7 @@ FROM ` + imageCacheName + ` as builder
 		dockerfile += `
 # (en) first stage of the process
 # (pt) primeira etapa do processo
-FROM golang:1.16-alpine as builder
+FROM ` + e.finalImageName + ` as builder
 #
 `
 	}
