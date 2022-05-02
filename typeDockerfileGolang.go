@@ -10,11 +10,19 @@ import (
 	"strings"
 )
 
-// ChangePort (english): Receives the relationship between ports to be exchanged
+// ChangePort
+//
+// English:
+//
+//  Receives the relationship between ports to be exchanged
+//
 //   oldPort: porta original da imagem
 //   newPort: porta a exporta na rede
 //
-// ChangePort (português): Recebe a relação entre portas a serem trocadas
+// Português:
+//
+//  Recebe a relação entre portas a serem trocadas
+//
 //   oldPort: porta original da imagem
 //   newPort: porta a exporta na rede
 type ChangePort struct {
@@ -22,59 +30,107 @@ type ChangePort struct {
 	NewPort string
 }
 
+type Copy struct {
+	Src string
+	Dst string
+}
+
 type DockerfileGolang struct {
 	disableScratch bool
 	finalImageName string
+	copy           []Copy
 }
 
-// SetFinalImageName (english) Set a two stage build final image name
+// SetFinalImageName
 //
-// SetFinalImageName (português) Define o nome da imagem final para construção de imagem em dois
-// estágios.
+// English:
+//
+//  Set a two stage build final image name
+//
+// Português:
+//
+//  Define o nome da imagem final para construção de imagem em dois estágios.
 func (e *DockerfileGolang) SetFinalImageName(name string) {
 	e.DisableScratch()
 	e.finalImageName = name
 }
 
-// DisableScratch (english) Change final docker image from scratch to image name set in
-// SetFinalImageName() function
+// DisableScratch
 //
-// DisableScratch (português) Troca a imagem final do docker de scratch para o nome da imagem definida
-// na função SetFinalImageName()
+// English:
+//
+//  Change final docker image from scratch to image name set in SetFinalImageName() function
+//
+// Português:
+//
+//  Troca a imagem final do docker de scratch para o nome da imagem definida na função
+//  SetFinalImageName()
 func (e *DockerfileGolang) DisableScratch() {
 	e.disableScratch = true
 }
 
-// Prayer (english): Programmer prayer
+// AddCopyToFinalImage
 //
-// Prayer (português): Oração do programador
+// English:
+//
+//  Add one instruction 'COPY --from=builder /app/`dst` `src`' to final image builder.
+//
+// Português:
+//
+//  Adiciona uma instrução 'COPY --from=builder /app/`dst` `src`' ao builder da imagem final.
+//
+//
+func (e *DockerfileGolang) AddCopyToFinalImage(src, dst string) {
+	if e.copy == nil {
+		e.copy = make([]Copy, 0)
+	}
+
+	e.copy = append(e.copy, Copy{Src: src, Dst: dst})
+}
+
+// Prayer
+//
+// English:
+//
+//  Programmer prayer.
+//
+// Português:
+//
+//  Oração do programador.
 func (e *DockerfileGolang) Prayer() {
 	log.Print("Português:")
-	log.Print("Código nosso que estais em Golang\nSantificado seja Vós, Console\nVenha a nós a Vossa Reflexão\nE seja feita a {Vossa chave}\nAssim no if(){}\nComo no else{}\nO for (nosso; de cada dia; nos dai hoje++)\nDebugai as nossas sentenças\nAssim como nós colocamos\nO ponto e vírgula esquecido;\nE não nos\n\tdeixeis errar\n\t\ta indentação\nMas, livrai-nos das funções recursivas\nA main ()")
-	log.Print("")
-	log.Print("English:")
-	log.Print("Our program, who art in memory,\ncalled by thy name;\nthy operating system run;\nthy function be done at runtime\nas it was on development.\nGive us this day our daily output.\nAnd forgive us our code duplication,\nas we forgive those who\nduplicate code against us.\nAnd lead us not into frustration;\nbut deliver us from GOTOs.\nFor thine is algorithm,\nthe computation, and the solution,\nlooping forever and ever.\nReturn;")
+	log.Print("Código nosso que estais em Golang\nSantificado seja Vós, Console\nVenha a nós a Vossa Reflexão\nE seja feita as {Vossas chaves}\nAssim no if(){}\nComo no else{}\nO for (nosso; de cada dia; nos dai hoje++)\nDebugai as nossas sentenças\nAssim como nós colocamos\nO ponto e vírgula esquecido;\nE não nos\n\tdeixeis errar\n\t\ta indentação\nMas, livrai-nos das funções recursivas\nA main ()")
 	log.Print("")
 }
 
-// MountDefaultDockerfile (english): Build a default dockerfile for image
+// MountDefaultDockerfile
+//
+// English:
+//
+//  Build a default dockerfile for image
+//
 //   Input:
 //     args: list of environment variables used in the container
 //     changePorts: list of ports to be exposed on the network, used in the original image that should be changed. E.g.: 27017 to 27016
 //     openPorts: list of ports to be exposed on the network
 //     exposePorts: list of ports to just be added to the project's dockerfile
 //     volumes: list of folders and files with permission to share between the container and the host.
+//
 //   Output:
 //     dockerfile: string containing the project's dockerfile
 //     err: standard error object
 //
-// MountDefaultDockerfile (português): Monta o dockerfile padrão para a imagem
+// Português:
+//
+//  Monta o dockerfile padrão para a imagem
+//
 //   Entrada:
 //     args: lista de variáveis de ambiente usadas no container
 //     changePorts: lista de portas a serem expostas na rede, usadas na imagem original que devem ser trocadas. Ex.: 27017 para 27016
 //     openPorts: lista de portas a serem expostas na rede
 //     exposePorts: lista de portas a serem apenas adicionadas ao dockerfile do projeto
 //     volumes: lista de pastas e arquivos com permissão de compartilhamento entre o container e o hospedeiro.
+//
 //   Saída:
 //     dockerfile: string contendo o dockerfile do projeto
 //     err: objeto de erro padrão
@@ -268,7 +324,14 @@ FROM ` + e.finalImageName + `
 # (en) copy your project to the new image
 # (pt) copia o seu projeto para a nova imagem
 COPY --from=builder /app/main .
-# (en) execute your project
+`
+
+		for _, copyFile := range e.copy {
+			dockerfile += `COPY --from=builder /app/` + copyFile.Dst + ` ` + copyFile.Src + `
+`
+		}
+
+		dockerfile += `# (en) execute your project
 # (pt) executa o seu projeto
 `
 	} else {
@@ -277,7 +340,14 @@ FROM scratch
 # (en) copy your project to the new image
 # (pt) copia o seu projeto para a nova imagem
 COPY --from=builder /app/main .
-# (en) execute your project
+`
+
+		for _, copyFile := range e.copy {
+			dockerfile += `COPY --from=builder /app/` + copyFile.Dst + ` ` + copyFile.Src + `
+`
+		}
+
+		dockerfile += `# (en) execute your project
 # (pt) executa o seu projeto
 `
 	}
