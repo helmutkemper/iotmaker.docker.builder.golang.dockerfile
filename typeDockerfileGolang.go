@@ -234,6 +234,18 @@ RUN mkdir -p /root/.ssh/ && \
 `
 	}
 
+	_, found = args["SSH_ID_ECDSA_FILE"]
+	if found == true {
+		dockerfile += `
+    # (en) creates the id_ecdsa file inside the .ssh directory
+    # (pt) cria o arquivo id_ecdsa dentro do diretório .ssh
+    echo "SSH_ID_ECDSA_FILE" > /root/.ssh/id_ecdsa && \
+    # (en) adjust file access security
+    # (pt) ajusta a segurança de acesso do arquivo
+    chmod -R 600 /root/.ssh/ && \
+`
+	}
+
 	_, found = args["KNOWN_HOSTS_FILE"]
 	if found == true {
 		dockerfile += `
