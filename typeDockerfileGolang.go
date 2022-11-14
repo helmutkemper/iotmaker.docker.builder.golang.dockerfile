@@ -36,9 +36,10 @@ type Copy struct {
 }
 
 type DockerfileGolang struct {
-	disableScratch bool
-	finalImageName string
-	copy           []Copy
+	disableScratch     bool
+	finalImageName     string
+	sshDefaultFileName string
+	copy               []Copy
 }
 
 // SetFinalImageName
@@ -88,6 +89,19 @@ func (e *DockerfileGolang) AddCopyToFinalImage(src, dst string) {
 	e.copy = append(e.copy, Copy{Src: src, Dst: dst})
 }
 
+// SetDefaultSshFileName
+//
+// English:
+//
+//  Sets the name of the file used as the ssh key.
+//
+// Português:
+//
+//  Define o nome do arquivo usado como chave ssh.
+func (e *DockerfileGolang) SetDefaultSshFileName(name string) {
+	e.sshDefaultFileName = name
+}
+
 // Prayer
 //
 // English:
@@ -99,7 +113,7 @@ func (e *DockerfileGolang) AddCopyToFinalImage(src, dst string) {
 //  Oração do programador.
 func (e *DockerfileGolang) Prayer() {
 	log.Print("Português:")
-	log.Print("Código nosso que estais em Golang\nSantificado seja Vós, Console\nVenha a nós a Vossa Reflexão\nE seja feita as {Vossas chaves}\nAssim no if(){}\nComo no else{}\nO for (nosso; de cada dia; nos dai hoje++)\nDebugai as nossas sentenças\nAssim como nós colocamos\nO ponto e vírgula esquecido;\nE não nos\n\tdeixeis errar\n\t\ta indentação\nMas, livrai-nos das funções recursivas\nA main ()")
+	log.Print("Código nosso que estais em Golang\nSantificado seja Vós, Console\nVenha a nós a Vossa Reflexão\nE seja feita as {Vossas chaves}\nAssim no if(){}\nComo no else{}\nO for (nosso; de cada dia; nos dai hoje++)\nDebugai as nossas sentenças\nAssim como nós colocamos\nO ponto e vírgula esquecido;\nE não nos\n\tdeixeis errar\n\t\ta indentação\nMas, livrai-nos das funções recursivas\nA main()")
 	log.Print("")
 }
 
@@ -153,6 +167,10 @@ func (e *DockerfileGolang) MountDefaultDockerfile(
 
 	if e.finalImageName == "" {
 		e.finalImageName = "golang:1.19-alpine"
+	}
+
+	if e.sshDefaultFileName == "" {
+		e.sshDefaultFileName = "id_ecdsa"
 	}
 
 	if useCache == true {
@@ -227,7 +245,19 @@ RUN mkdir -p /root/.ssh/ && \
 		dockerfile += `
     # (en) creates the id_esa file inside the .ssh directory
     # (pt) cria o arquivo id_esa dentro do diretório .ssh
-    echo "$SSH_ID_RSA_FILE" > /root/.ssh/id_rsa && \
+    echo "$SSH_ID_RSA_FILE" > /root/.ssh/` + e.sshDefaultFileName + ` && \
+    # (en) adjust file access security
+    # (pt) ajusta a segurança de acesso do arquivo
+    chmod -R 600 /root/.ssh/ && \
+`
+	}
+
+	_, found = args["SSH_ID_ECDSA_FILE"]
+	if found == true {
+		dockerfile += `
+    # (en) creates the id_ecdsa file inside the .ssh directory
+    # (pt) cria o arquivo id_ecdsa dentro do diretório .ssh
+    echo "SSH_ID_ECDSA_FILE" > /root/.ssh/id_ecdsa && \
     # (en) adjust file access security
     # (pt) ajusta a segurança de acesso do arquivo
     chmod -R 600 /root/.ssh/ && \
@@ -266,9 +296,9 @@ RUN mkdir -p /root/.ssh/ && \
     # (en) install binutils, file, gcc, g++, make, libc-dev, fortify-headers and patch
     # (pt) instala binutils, file, gcc, g++, make, libc-dev, fortify-headers e patch
     apk add --no-cache build-base && \
-    # (en) install git, fakeroot, scanelf, openssl, apk-tools, libc-utils, attr, tar, pkgconf, patch, lzip, curl, 
+    # (en) install git, fakeroot, scanelf, openssl, apk-tools, libc-utils, attr, tar, pkgconf, patch, lzip, curl,
     #      /bin/sh, so:libc.musl-x86_64.so.1, so:libcrypto.so.1.1 and so:libz.so.1
-    # (pt) instala git, fakeroot, scanelf, openssl, apk-tools, libc-utils, attr, tar, pkgconf, patch, lzip, curl, 
+    # (pt) instala git, fakeroot, scanelf, openssl, apk-tools, libc-utils, attr, tar, pkgconf, patch, lzip, curl,
     #      /bin/sh, so:libc.musl-x86_64.so.1, so:libcrypto.so.1.1 e so:libz.so.1
     apk add --no-cache alpine-sdk && \
 `
@@ -313,9 +343,9 @@ RUN go build -ldflags="-w -s" -o /app/main /app/main.go
 # (pt) cria uma nova imagem baseada no scratch
 # (en) scratch is an extremely simple OS capable of generating very small images
 # (pt) o scratch é um OS extremamente simples capaz de gerar imagens muito reduzidas
-# (en) discarding the previous image erases git access credentials for your security and reduces the size of the 
+# (en) discarding the previous image erases git access credentials for your security and reduces the size of the
 #      image to save server space
-# (pt) descartar a imagem anterior apaga as credenciais de acesso ao git para a sua segurança e reduz o tamanho 
+# (pt) descartar a imagem anterior apaga as credenciais de acesso ao git para a sua segurança e reduz o tamanho
 #      da imagem para poupar espaço no servidor
 `
 	if e.disableScratch == true {
