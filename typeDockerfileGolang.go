@@ -152,7 +152,7 @@ func (e *DockerfileGolang) MountDefaultDockerfile(
 	var found bool
 
 	if e.finalImageName == "" {
-		e.finalImageName = "golang:1.17-alpine"
+		e.finalImageName = "golang:1.19-alpine"
 	}
 
 	if useCache == true {
